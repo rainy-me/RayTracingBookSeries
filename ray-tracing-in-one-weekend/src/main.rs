@@ -4,7 +4,7 @@ fn main() {
     // Image
     let aspect_ratio = 16.0 / 9.0;
     let width = 400;
-    let height = (width / aspect_ratio as i32) as i32;
+    let height = (width as f64/ aspect_ratio) as i32;
 
     // Camera
 
