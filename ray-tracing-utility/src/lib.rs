@@ -54,7 +54,7 @@ impl Vec3<f64> {
         self.div(len)
     }
 
-    pub fn write_color_string(self) {
+    pub fn print_color_string(self) {
         println!(
             "{}",
             vec![self.x, self.y, self.z,]

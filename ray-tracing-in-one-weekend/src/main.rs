@@ -11,7 +11,7 @@ fn main() {
                 j as f64 / (height - 1) as f64,
                 0.25,
             )
-            .write_color_string();
+            .print_color_string();
         }
     }
     eprintln!("Done.");
