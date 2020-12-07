@@ -3,3 +3,10 @@
 [[package]]
 name = "ray-tracing-in-one-weekend"
 version = "0.1.0"
+dependencies = [
+ "ray-tracing-utility",
+]
+
+[[package]]
+name = "ray-tracing-utility"
+version = "0.1.0"
