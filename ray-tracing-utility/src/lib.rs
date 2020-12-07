@@ -1,4 +1,4 @@
-use std::{fmt, ops};
+use std::{convert, fmt, ops};
 
 #[derive(Copy, Clone)]
 pub struct Vec3<T> {
@@ -76,6 +76,22 @@ impl Default for Vec3<f64> {
     }
 }
 
+impl convert::From<(i32, i32, i32)> for Vec3<f64> {
+    fn from((a, b, c): (i32, i32, i32)) -> Self {
+        Vec3 {
+            x: a as f64,
+            y: b as f64,
+            z: c as f64,
+        }
+    }
+}
+
+impl convert::From<(f64, f64, f64)> for Vec3<f64> {
+    fn from((x, y, z): (f64, f64, f64)) -> Self {
+        Vec3 { x, y, z }
+    }
+}
+
 impl fmt::Display for Vec3<f64> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "vec3({}, {},{})", self.x, self.y, self.z)
@@ -119,5 +135,35 @@ impl ops::Mul for Vec3<f64> {
     type Output = f64;
     fn mul(self, rhs: Self) -> Self::Output {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+    }
+}
+pub type Point3<T> = Vec3<T>;
+pub type Color<T> = Vec3<T>;
+pub struct Ray<T> {
+    pub origin: Point3<T>,
+    pub direction: Vec3<T>,
+}
+
+impl Ray<f64> {
+    pub fn new(origin: Point3<f64>, direction: Vec3<f64>) -> Self {
+        Ray { origin, direction }
+    }
+
+    pub fn at(self, t: f64) -> Point3<f64> {
+        self.origin + self.direction.mul(t)
+    }
+    pub fn color(self) -> Color<f64> {
+        let unit = self.direction.unit();
+        let t = 0.5 * (unit.y + 1f64);
+        return Color::from((1, 1, 1)).mul(1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)).mul(t);
+    }
+}
+
+impl Default for Ray<f64> {
+    fn default() -> Self {
+        Ray {
+            origin: Point3::default(),
+            direction: Vec3::default(),
+        }
     }
 }
