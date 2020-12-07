@@ -1,7 +1,8 @@
 fn main() {
     let (width, height) = (256, 256);
-    println!("P3\n{} {}\n255\n", width, height);
+    println!("P3\n{} {}\n255", width, height);
     for j in (0..height).rev() {
+        eprintln!("Scanlines remaining: {}", j);
         for i in 0..width {
             println!(
                 "{}",
@@ -17,4 +18,5 @@ fn main() {
             );
         }
     }
+    eprintln!("Done.");
 }
