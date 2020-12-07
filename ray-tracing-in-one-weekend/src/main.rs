@@ -1,10 +1,11 @@
 use ray_tracing_utility::{Point3, Ray, Vec3};
+use rayon::prelude::*;
 
 fn main() {
     // Image
     let aspect_ratio = 16.0 / 9.0;
     let width = 400;
-    let height = (width as f64/ aspect_ratio) as i32;
+    let height = (width as f64 / aspect_ratio) as i32;
 
     // Camera
 
@@ -19,18 +20,22 @@ fn main() {
         origin - horizontal.div(2f64) - vertical.div(2f64) - Vec3::from((0, 0, focal_length));
 
     println!("P3\n{} {}\n255", width, height);
-    for j in (0..height).rev() {
-        eprintln!("Scanlines remaining: {}", j);
-        for i in 0..width {
+
+    (0..height)
+        .rev()
+        .flat_map(|j| (0..width).map(|i| (i, j)).collect::<Vec<(i32, i32)>>())
+        .collect::<Vec<(i32, i32)>>()
+        .par_iter()
+        .map(|&(i, j)| {
             let u = i as f64 / (width - 1) as f64;
             let v = j as f64 / (height - 1) as f64;
             Ray {
                 origin,
                 direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin,
             }
-            .color()
-            .print_color_string();
-        }
-    }
+            .color_vec()
+            .to_i32_vec()
+        })
+        .map(|r| r.print()).collect::<()>();
     eprintln!("Done.");
 }

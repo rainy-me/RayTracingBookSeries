@@ -54,12 +54,22 @@ impl Vec3<f64> {
         self.div(len)
     }
 
-    pub fn print_color_string(self) {
+    pub fn to_i32_vec(self) -> Vec3<i32> {
+        Vec3 {
+            x: (self.x * 256f64) as i32,
+            y: (self.y * 256f64) as i32,
+            z: (self.z * 256f64) as i32,
+        }
+    }
+}
+
+impl Vec3<i32> {
+    pub fn print(self) {
         println!(
             "{}",
             vec![self.x, self.y, self.z,]
                 .iter()
-                .map(|n| ((256f64 * n) as i32).to_string())
+                .map(|n| n.to_string())
                 .collect::<Vec<_>>()
                 .join(" ")
         );
@@ -152,7 +162,7 @@ impl Ray<f64> {
     pub fn at(self, t: f64) -> Point3<f64> {
         self.origin + self.direction.mul(t)
     }
-    pub fn color(self) -> Color<f64> {
+    pub fn color_vec(self) -> Color<f64> {
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
         return Color::from((1, 1, 1)).mul(1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)).mul(t);
