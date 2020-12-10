@@ -11,10 +11,10 @@ fn main() -> std::io::Result<()> {
     let img_pmm = path.join("ray-tracing-in-one-weekend.ppm");
     let img_png = path.join("ray-tracing-in-one-weekend.png");
     let aspect_ratio = 16.0 / 9.0;
-    let width = 400;
+    let width = 800;
     let height = (width as f64 / aspect_ratio) as i32;
     let samples_per_pixel = 100;
-    let max_depth = 50;
+    let max_depth = 100;
 
     // World
     let sp_1 = Sphere::new(Point3::from((0, 0, -1)), 0.5);

@@ -45,7 +45,7 @@ impl Vec3 {
 
         vec![self.x, self.y, self.z]
             .iter()
-            .map(|n| ((256.0 * clamp((n * scale).sqrt(), 0.0, 0.999)) as i32).to_string())
+            .map(|n| ((255.999 * clamp((n * scale).sqrt(), 0.0, 0.999)) as i32).to_string())
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -66,13 +66,17 @@ impl Vec3 {
         }
     }
 
-    pub fn random_in_unit() -> Self {
+    pub fn random_in_unit_sphere() -> Self {
         loop {
             let p = Vec3::random_in_range(-1.0, 1.0);
             if p.length_squared() < 1.0 {
                 return p;
             }
         }
+    }
+
+    pub fn random_unit_vec() -> Self {
+        Self::random_in_unit_sphere().unit()
     }
 }
 
@@ -225,8 +229,8 @@ impl Ray {
             return Color::from((0, 0, 0));
         }
         let mut record = HitRecord::default();
-        if hittable.hit(&self, 0.0, std::f64::INFINITY, &mut record) {
-            let target = record.point + record.normal + Vec3::random_in_unit();
+        if hittable.hit(&self, 0.001, std::f64::INFINITY, &mut record) {
+            let target = record.point + record.normal + Vec3::random_unit_vec();
             return Ray {
                 origin: record.point,
                 direction: target - record.point,
