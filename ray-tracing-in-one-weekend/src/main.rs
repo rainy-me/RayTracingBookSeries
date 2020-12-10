@@ -7,8 +7,8 @@ use std::rc::Rc;
 fn main() -> std::io::Result<()> {
     // Image
     let path = env::current_dir()?.join("out");
-    let img_pmm = path.join("img.ppm");
-    let img_png = path.join("img.png");
+    let img_pmm = path.join("ray-tracing-in-one-weekend.ppm");
+    let img_png = path.join("ray-tracing-in-one-weekend.png");
     let aspect_ratio = 16.0 / 9.0;
     let width = 400;
     let height = (width as f64 / aspect_ratio) as i32;
