@@ -39,10 +39,12 @@ impl Vec3<f64> {
         self / len
     }
 
-    pub fn to_color_string(self) -> String {
+    pub fn to_color_string(self, samples_per_pixel: i32) -> String {
+        let scale = 1.0 / samples_per_pixel as f64;
+
         vec![self.x, self.y, self.z]
             .iter()
-            .map(|n| ((256f64 * n) as i32).to_string())
+            .map(|n| ((256.0 * clamp(n * scale, 0.0, 0.999)) as i32).to_string())
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -101,6 +103,16 @@ impl ops::Add<Vec3<f64>> for Vec3<f64> {
     }
 }
 
+impl ops::AddAssign for Vec3<f64> {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        };
+    }
+}
+
 impl ops::Neg for Vec3<f64> {
     type Output = Self;
     fn neg(self) -> Self::Output {
@@ -137,6 +149,17 @@ impl ops::Mul<f64> for Vec3<f64> {
             x: self.x * rhs,
             y: self.y * rhs,
             z: self.z * rhs,
+        }
+    }
+}
+
+impl ops::Mul<Vec3<f64>> for f64 {
+    type Output = Vec3<f64>;
+    fn mul(self, rhs: Vec3<f64>) -> Self::Output {
+        Vec3 {
+            x: rhs.x * self,
+            y: rhs.y * self,
+            z: rhs.z * self,
         }
     }
 }
@@ -321,4 +344,49 @@ impl Hittable for HittableList {
 
 pub fn degrees_to_radians(degrees: f64) -> f64 {
     return degrees * std::f64::consts::PI / 180.0;
+}
+
+pub struct Camera {
+    origin: Point3<f64>,
+    lower_left_corner: Point3<f64>,
+    horizontal: Vec3<f64>,
+    vertical: Vec3<f64>,
+}
+
+impl Camera {
+    pub fn new() -> Self {
+        let aspect_ratio = 16.0 / 9.0;
+        let viewport_height = 2.0;
+        let viewport_width = aspect_ratio * viewport_height;
+        let focal_length = 1.0;
+
+        let origin = Point3::from((0, 0, 0));
+        let horizontal = Vec3::from((viewport_width, 0.0, 0.0));
+        let vertical = Vec3::from((0.0, viewport_height, 0.0));
+        let lower_left_corner =
+            origin - horizontal / 2.0 - vertical / 2.0 - Vec3::from((0.0, 0.0, focal_length));
+
+        Camera {
+            origin,
+            lower_left_corner,
+            horizontal,
+            vertical,
+        }
+    }
+
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray<f64> {
+        Ray {
+            origin: self.origin,
+            direction: self.lower_left_corner + u * self.horizontal + v * self.vertical
+                - self.origin,
+        }
+    }
+}
+
+pub fn clamp(x: f64, min: f64, max: f64) -> f64 {
+    match true {
+        _ if x < min => min,
+        _ if x > max => max,
+        _ => x,
+    }
 }

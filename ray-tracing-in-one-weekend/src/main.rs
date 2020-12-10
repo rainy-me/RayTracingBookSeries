@@ -1,4 +1,4 @@
-use ray_tracing_utility::{HittableList, Point3, Ray, Sphere, Vec3};
+use ray_tracing_utility::*;
 use std::env;
 use std::fs;
 use std::process::Command;
@@ -12,6 +12,7 @@ fn main() -> std::io::Result<()> {
     let aspect_ratio = 16.0 / 9.0;
     let width = 400;
     let height = (width as f64 / aspect_ratio) as i32;
+    let samples_per_pixel = 100;
 
     // World
     let sp_1 = Sphere::new(Point3::from((0, 0, -1)), 0.5);
@@ -21,30 +22,19 @@ fn main() -> std::io::Result<()> {
     world.add(Rc::new(sp_2));
 
     // Camera
-    let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height as f64;
-    let focal_length = 1;
-
-    let origin = Point3::from((0, 0, 0));
-    let horizontal = Vec3::from((viewport_width, 0.0, 0.0));
-    let vertical = Vec3::from((0.0, viewport_height, 0.0));
-    let lower_left_corner =
-        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::from((0, 0, focal_length));
+    let camera = Camera::new();
 
     let mut img_content = vec![format!("P3\n{} {}\n255", width, height)];
     for j in (0..height).rev() {
         // eprintln!("Scanlines remaining: {}", j);
         for i in 0..width {
-            let u = i as f64 / width as f64;
-            let v = j as f64 / height as f64;
-            img_content.push(
-                Ray {
-                    origin,
-                    direction: lower_left_corner + horizontal * u + vertical * v - origin,
-                }
-                .calc_color(&world)
-                .to_color_string(),
-            )
+            let mut pixel_color = Color::from((0, 0, 0));
+            for _ in 0..samples_per_pixel {
+                let u = i as f64 / width as f64;
+                let v = j as f64 / height as f64;
+                pixel_color += camera.get_ray(u, v).calc_color(&world)
+            }
+            img_content.push(pixel_color.to_color_string(samples_per_pixel))
         }
     }
     img_content.push("\n".to_string());
