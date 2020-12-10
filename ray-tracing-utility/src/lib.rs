@@ -13,22 +13,6 @@ impl Vec3<f64> {
         Vec3 { x, y, z }
     }
 
-    pub fn mul(self, t: f64) -> Self {
-        Vec3 {
-            x: self.x * t,
-            y: self.y * t,
-            z: self.z * t,
-        }
-    }
-
-    pub fn div(self, t: f64) -> Self {
-        Vec3 {
-            x: self.x / t,
-            y: self.y / t,
-            z: self.z / t,
-        }
-    }
-
     pub fn length_squared(self) -> f64 {
         self * self
     }
@@ -51,7 +35,7 @@ impl Vec3<f64> {
 
     pub fn unit(self) -> Self {
         let len = self.length();
-        self.div(len)
+        self / len
     }
 
     pub fn print_color_string(self) {
@@ -131,12 +115,35 @@ impl ops::Sub for Vec3<f64> {
     }
 }
 
-impl ops::Mul for Vec3<f64> {
+impl ops::Mul<Vec3<f64>> for Vec3<f64> {
     type Output = f64;
     fn mul(self, rhs: Self) -> Self::Output {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
+
+impl ops::Mul<f64> for Vec3<f64> {
+    type Output = Vec3<f64>;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
+        }
+    }
+}
+
+impl ops::Div<f64> for Vec3<f64> {
+    type Output = Vec3<f64>;
+    fn div(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
+        }
+    }
+}
+
 pub type Point3<T> = Vec3<T>;
 pub type Color<T> = Vec3<T>;
 pub struct Ray<T> {
@@ -150,15 +157,16 @@ impl Ray<f64> {
     }
 
     pub fn at(self, t: f64) -> Point3<f64> {
-        self.origin + self.direction.mul(t)
+        self.origin + self.direction * t
     }
+
     pub fn color(self) -> Color<f64> {
         if self.hit(&Point3::from((0, 0, -1)), 0.5) {
             return Color::from((1, 0, 0));
         }
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
-        return Color::from((1, 1, 1)).mul(1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)).mul(t);
+        return Color::from((1, 1, 1)) * (1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)) * t;
     }
 
     pub fn hit(&self, center: &Point3<f64>, radius: f64) -> bool {

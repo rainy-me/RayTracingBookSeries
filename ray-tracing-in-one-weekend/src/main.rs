@@ -16,7 +16,7 @@ fn main() {
     let horizontal = Vec3::from((viewport_width, 0f64, 0f64));
     let vertical = Vec3::from((0f64, viewport_height, 0f64));
     let lower_left_corner =
-        origin - horizontal.div(2f64) - vertical.div(2f64) - Vec3::from((0, 0, focal_length));
+        origin - horizontal / 2f64 - vertical / 2f64 - Vec3::from((0, 0, focal_length));
 
     println!("P3\n{} {}\n255", width, height);
     for j in (0..height).rev() {
@@ -26,7 +26,7 @@ fn main() {
             let v = j as f64 / height as f64;
             Ray {
                 origin,
-                direction: lower_left_corner + horizontal.mul(u) + vertical.mul(v) - origin,
+                direction: lower_left_corner + horizontal * u + vertical * v - origin,
             }
             .color()
             .print_color_string();
