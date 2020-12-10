@@ -291,7 +291,6 @@ pub trait Hittable {
 
 impl HitRecord {
     pub fn set_face_normal(&mut self, ray: &Ray<f64>, outward_normal: Vec3<f64>) {
-        let outward_normal = outward_normal.clone();
         self.front_face = (ray.direction * outward_normal).is_sign_negative();
         self.normal = if self.front_face {
             outward_normal
