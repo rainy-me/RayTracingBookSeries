@@ -38,15 +38,12 @@ impl Vec3<f64> {
         self / len
     }
 
-    pub fn print_color_string(self) {
-        println!(
-            "{}",
-            vec![self.x, self.y, self.z,]
-                .iter()
-                .map(|n| ((256f64 * n) as i32).to_string())
-                .collect::<Vec<_>>()
-                .join(" ")
-        );
+    pub fn to_color_string(self) -> String {
+        vec![self.x, self.y, self.z]
+            .iter()
+            .map(|n| ((256f64 * n) as i32).to_string())
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }
 
@@ -160,7 +157,7 @@ impl Ray<f64> {
         self.origin + self.direction * t
     }
 
-    pub fn color(self) -> Color<f64> {
+    pub fn calc_color(self) -> Color<f64> {
         if self.hit(&Point3::from((0, 0, -1)), 0.5) {
             return Color::from((1, 0, 0));
         }
