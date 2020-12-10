@@ -78,6 +78,15 @@ impl Vec3 {
     pub fn random_unit_vec() -> Self {
         Self::random_in_unit_sphere().unit()
     }
+
+    pub fn random_in_hemisphere(self) -> Self {
+        let in_unit_sphere = Self::random_in_unit_sphere();
+        if (in_unit_sphere * self).is_sign_positive() {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
 }
 
 impl Default for Vec3 {
@@ -230,7 +239,8 @@ impl Ray {
         }
         let mut record = HitRecord::default();
         if hittable.hit(&self, 0.001, std::f64::INFINITY, &mut record) {
-            let target = record.point + record.normal + Vec3::random_unit_vec();
+            // let target = record.point + record.normal + Vec3::random_unit_vec();
+            let target = record.point + record.normal.random_in_hemisphere();
             return Ray {
                 origin: record.point,
                 direction: target - record.point,
