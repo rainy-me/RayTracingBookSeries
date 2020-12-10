@@ -21,7 +21,7 @@ fn main() -> std::io::Result<()> {
     world.add(Rc::new(sp_2));
 
     // Camera
-    let viewport_height = 2f64;
+    let viewport_height = 2.0;
     let viewport_width = aspect_ratio * viewport_height as f64;
     let focal_length = 1;
 
@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
     let horizontal = Vec3::from((viewport_width, 0.0, 0.0));
     let vertical = Vec3::from((0.0, viewport_height, 0.0));
     let lower_left_corner =
-        origin - horizontal / 2f64 - vertical / 2f64 - Vec3::from((0, 0, focal_length));
+        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::from((0, 0, focal_length));
 
     let mut img_content = vec![format!("P3\n{} {}\n255", width, height)];
     for j in (0..height).rev() {
