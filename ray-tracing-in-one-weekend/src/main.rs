@@ -26,7 +26,7 @@ fn main() -> std::io::Result<()> {
 
     let mut img_content = vec![format!("P3\n{} {}\n255", width, height)];
     for j in (0..height).rev() {
-        eprintln!("Scanlines remaining: {}", j);
+        // eprintln!("Scanlines remaining: {}", j);
         for i in 0..width {
             let u = i as f64 / width as f64;
             let v = j as f64 / height as f64;

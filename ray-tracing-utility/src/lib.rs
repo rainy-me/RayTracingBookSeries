@@ -79,7 +79,17 @@ impl fmt::Display for Vec3<f64> {
     }
 }
 
-impl ops::Add for Vec3<f64> {
+impl ops::Add<f64> for Vec3<f64> {
+    type Output = Self;
+    fn add(self, rhs: f64) -> Self::Output {
+        Vec3 {
+            x: self.x + rhs,
+            y: self.y + rhs,
+            z: self.z + rhs,
+        }
+    }
+}
+impl ops::Add<Vec3<f64>> for Vec3<f64> {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Vec3 {
@@ -158,15 +168,17 @@ impl Ray<f64> {
     }
 
     pub fn calc_color(self) -> Color<f64> {
-        if self.hit(&Point3::from((0, 0, -1)), 0.5) {
-            return Color::from((1, 0, 0));
+        let t = self.hit(&Point3::from((0, 0, -1)), 0.5);
+        if t.is_sign_positive() {
+            let n = self.at(t) - Vec3::from((0, 0, -1));
+            return (n + 1f64) * 0.6f64;
         }
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
         return Color::from((1, 1, 1)) * (1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)) * t;
     }
 
-    pub fn hit(&self, center: &Point3<f64>, radius: f64) -> bool {
+    pub fn hit(&self, center: &Point3<f64>, radius: f64) -> f64 {
         hit_sphere(center, radius, self)
     }
 }
@@ -180,11 +192,15 @@ impl Default for Ray<f64> {
     }
 }
 
-fn hit_sphere(&center: &Point3<f64>, radius: f64, ray: &Ray<f64>) -> bool {
+fn hit_sphere(&center: &Point3<f64>, radius: f64, ray: &Ray<f64>) -> f64 {
     let oc = ray.origin - center;
-    let a = ray.direction * ray.direction;
-    let b = oc * ray.direction * 2f64;
-    let c = oc * oc - radius * radius;
-    let discriminant = b * b - 4f64 * a * c;
-    discriminant > 0f64
+    let a = ray.direction.length_squared();
+    let half_b = oc * ray.direction;
+    let c = oc.length_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+    if discriminant.is_sign_negative() {
+        -1f64
+    } else {
+        (-half_b - discriminant.sqrt()) / a
+    }
 }
