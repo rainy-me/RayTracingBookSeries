@@ -1,4 +1,5 @@
-use std::rc::Rc;
+use rand::Rng;
+use std::sync::Arc;
 use std::{convert, fmt, ops};
 
 #[derive(Copy, Clone)]
@@ -47,6 +48,31 @@ impl Vec3<f64> {
             .map(|n| ((256.0 * clamp(n * scale, 0.0, 0.999)) as i32).to_string())
             .collect::<Vec<_>>()
             .join(" ")
+    }
+
+    pub fn random() -> Self {
+        Vec3 {
+            x: rand::random::<f64>(),
+            y: rand::random::<f64>(),
+            z: rand::random::<f64>(),
+        }
+    }
+
+    pub fn random_in_range(low: f64, high: f64) -> Self {
+        Vec3 {
+            x: rand::thread_rng().gen_range(low, high),
+            y: rand::thread_rng().gen_range(low, high),
+            z: rand::thread_rng().gen_range(low, high),
+        }
+    }
+
+    pub fn random_in_unit() -> Self {
+        loop {
+            let p = Vec3::random_in_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
     }
 }
 
@@ -193,10 +219,20 @@ impl Ray<f64> {
         self.origin + self.direction * t
     }
 
-    pub fn calc_color(self, hittable: &dyn Hittable) -> Color<f64> {
-        let mut hit_record = HitRecord::default();
-        if hittable.hit(&self, 0.0, std::f64::INFINITY, &mut hit_record) {
-            return (hit_record.normal + 1.0) * 0.5;
+    pub fn calc_color(self, hittable: &dyn Hittable, depth: i32) -> Color<f64> {
+        // println!("depth: {}", depth);
+        if depth <= 0 {
+            return Color::from((0, 0, 0));
+        }
+        let mut record = HitRecord::default();
+        if hittable.hit(&self, 0.0, std::f64::INFINITY, &mut record) {
+            let target = record.point + record.normal + Vec3::random_in_unit();
+            return Ray {
+                origin: record.point,
+                direction: target - record.point,
+            }
+            .calc_color(hittable, depth - 1)
+                * 0.5;
         }
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
@@ -250,7 +286,7 @@ impl Default for HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool;
 }
 
 impl HitRecord {
@@ -277,7 +313,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = oc * ray.direction;
@@ -295,19 +331,22 @@ impl Hittable for Sphere {
                 return false;
             }
         }
-        hit_record.t = root;
-        hit_record.point = ray.at(hit_record.t).clone();
-        hit_record.set_face_normal(ray, (hit_record.point - self.center) / self.radius);
+        record.t = root;
+        record.point = ray.at(record.t).clone();
+        record.set_face_normal(ray, (record.point - self.center) / self.radius);
         true
     }
 }
 
-pub struct HittableList {
-    objects: Vec<Rc<dyn Hittable>>,
-}
+unsafe impl Send for HittableList {}
+unsafe impl Sync for HittableList {}
 
+#[derive(Clone)]
+pub struct HittableList {
+    objects: Vec<Arc<dyn Hittable>>,
+}
 impl HittableList {
-    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
     }
 
@@ -325,7 +364,7 @@ impl Default for HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let mut temp_rec = HitRecord::default();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
@@ -334,7 +373,7 @@ impl Hittable for HittableList {
             if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *hit_record = temp_rec;
+                *record = temp_rec;
             }
         }
 

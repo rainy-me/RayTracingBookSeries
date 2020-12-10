@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 ray-tracing-utility = { path = "../ray-tracing-utility" }
+rayon = "1.5"
