@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::{convert, fmt, ops};
 
 #[derive(Copy, Clone)]
@@ -153,6 +154,8 @@ impl ops::Div<f64> for Vec3<f64> {
 
 pub type Point3<T> = Vec3<T>;
 pub type Color<T> = Vec3<T>;
+
+#[derive(Copy, Clone)]
 pub struct Ray<T> {
     pub origin: Point3<T>,
     pub direction: Vec3<T>,
@@ -167,11 +170,10 @@ impl Ray<f64> {
         self.origin + self.direction * t
     }
 
-    pub fn calc_color(self) -> Color<f64> {
-        let t = self.hit(&Point3::from((0, 0, -1)), 0.5);
-        if t.is_sign_positive() {
-            let n = self.at(t) - Vec3::from((0, 0, -1));
-            return (n + 1f64) * 0.6f64;
+    pub fn calc_color(self, hittable: &dyn Hittable) -> Color<f64> {
+        let mut hit_record = HitRecord::default();
+        if hittable.hit(&self, 0.0, std::f64::INFINITY, &mut hit_record) {
+            return (hit_record.normal + 1.0) * 0.5;
         }
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
@@ -203,4 +205,120 @@ fn hit_sphere(&center: &Point3<f64>, radius: f64, ray: &Ray<f64>) -> f64 {
     } else {
         (-half_b - discriminant.sqrt()) / a
     }
+}
+
+#[derive(Copy, Clone)]
+pub struct HitRecord {
+    pub point: Point3<f64>,
+    pub normal: Vec3<f64>,
+    pub t: f64,
+    pub front_face: bool,
+}
+
+impl Default for HitRecord {
+    fn default() -> Self {
+        HitRecord {
+            point: Vec3::from((0, 0, 0)),
+            normal: Vec3::from((0, 0, 0)),
+            t: 0f64,
+            front_face: true,
+        }
+    }
+}
+
+pub trait Hittable {
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool;
+}
+
+impl HitRecord {
+    pub fn set_face_normal(&mut self, ray: &Ray<f64>, outward_normal: Vec3<f64>) {
+        let outward_normal = outward_normal.clone();
+        self.front_face = (ray.direction * outward_normal).is_sign_negative();
+        self.normal = if self.front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
+    }
+}
+
+pub struct Sphere {
+    pub center: Point3<f64>,
+    pub radius: f64,
+}
+
+impl Sphere {
+    pub fn new(center: Point3<f64>, radius: f64) -> Self {
+        Sphere { center, radius }
+    }
+}
+
+impl Hittable for Sphere {
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let oc = ray.origin - self.center;
+        let a = ray.direction.length_squared();
+        let half_b = oc * ray.direction;
+        let c = oc.length_squared() - self.radius * self.radius;
+
+        let discriminant = half_b * half_b - a * c;
+        if discriminant.is_sign_negative() {
+            return false;
+        }
+        let sqrtd = discriminant.sqrt();
+        let mut root = (-half_b - sqrtd) / a;
+        if root < t_min || t_max < root {
+            root = (-half_b + sqrtd) / a;
+            if root < t_min || t_max < root {
+                return false;
+            }
+        }
+        hit_record.t = root;
+        hit_record.point = ray.at(hit_record.t).clone();
+        hit_record.set_face_normal(ray, (hit_record.point - self.center) / self.radius);
+        true
+    }
+}
+
+pub struct HittableList {
+    objects: Vec<Rc<dyn Hittable>>,
+}
+
+impl HittableList {
+    pub fn add(&mut self, object: Rc<dyn Hittable>) {
+        self.objects.push(object);
+    }
+
+    pub fn clear(&mut self) {
+        self.objects.clear();
+    }
+}
+
+impl Default for HittableList {
+    fn default() -> Self {
+        HittableList {
+            objects: Vec::new(),
+        }
+    }
+}
+
+impl Hittable for HittableList {
+    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let mut temp_rec = HitRecord::default();
+        let mut hit_anything = false;
+        let mut closest_so_far = t_max;
+
+        for object in self.objects.iter() {
+            if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
+                hit_anything = true;
+                closest_so_far = temp_rec.t;
+                *hit_record = temp_rec;
+            }
+        }
+
+        hit_anything
+    }
+}
+
+pub fn degrees_to_radians(degrees: f64) -> f64 {
+    return degrees * std::f64::consts::PI / 180.0;
 }

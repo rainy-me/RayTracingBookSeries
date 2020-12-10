@@ -1,7 +1,8 @@
-use ray_tracing_utility::{Point3, Ray, Vec3};
+use ray_tracing_utility::{HittableList, Point3, Ray, Sphere, Vec3};
 use std::env;
 use std::fs;
 use std::process::Command;
+use std::rc::Rc;
 
 fn main() -> std::io::Result<()> {
     // Image
@@ -12,15 +13,21 @@ fn main() -> std::io::Result<()> {
     let width = 400;
     let height = (width as f64 / aspect_ratio) as i32;
 
-    // Camera
+    // World
+    let sp_1 = Sphere::new(Point3::from((0, 0, -1)), 0.5);
+    let sp_2 = Sphere::new(Point3::from((0.0, -100.5, 0.0)), 100.0);
+    let mut world = HittableList::default();
+    world.add(Rc::new(sp_1));
+    world.add(Rc::new(sp_2));
 
+    // Camera
     let viewport_height = 2f64;
     let viewport_width = aspect_ratio * viewport_height as f64;
     let focal_length = 1;
 
     let origin = Point3::from((0, 0, 0));
-    let horizontal = Vec3::from((viewport_width, 0f64, 0f64));
-    let vertical = Vec3::from((0f64, viewport_height, 0f64));
+    let horizontal = Vec3::from((viewport_width, 0.0, 0.0));
+    let vertical = Vec3::from((0.0, viewport_height, 0.0));
     let lower_left_corner =
         origin - horizontal / 2f64 - vertical / 2f64 - Vec3::from((0, 0, focal_length));
 
@@ -35,7 +42,7 @@ fn main() -> std::io::Result<()> {
                     origin,
                     direction: lower_left_corner + horizontal * u + vertical * v - origin,
                 }
-                .calc_color()
+                .calc_color(&world)
                 .to_color_string(),
             )
         }
