@@ -3,14 +3,14 @@ use std::sync::Arc;
 use std::{convert, fmt, ops};
 
 #[derive(Copy, Clone)]
-pub struct Vec3<T> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
+pub struct Vec3 {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 // f64 only for now. TODO: change to <T: num> using crates?
-impl Vec3<f64> {
+impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
     }
@@ -45,7 +45,7 @@ impl Vec3<f64> {
 
         vec![self.x, self.y, self.z]
             .iter()
-            .map(|n| ((256.0 * clamp(n * scale, 0.0, 0.999)) as i32).to_string())
+            .map(|n| ((256.0 * clamp((n * scale).sqrt(), 0.0, 0.999)) as i32).to_string())
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -76,7 +76,7 @@ impl Vec3<f64> {
     }
 }
 
-impl Default for Vec3<f64> {
+impl Default for Vec3 {
     fn default() -> Self {
         Vec3 {
             x: 0f64,
@@ -86,7 +86,7 @@ impl Default for Vec3<f64> {
     }
 }
 
-impl convert::From<(i32, i32, i32)> for Vec3<f64> {
+impl convert::From<(i32, i32, i32)> for Vec3 {
     fn from((a, b, c): (i32, i32, i32)) -> Self {
         Vec3 {
             x: a as f64,
@@ -96,19 +96,19 @@ impl convert::From<(i32, i32, i32)> for Vec3<f64> {
     }
 }
 
-impl convert::From<(f64, f64, f64)> for Vec3<f64> {
+impl convert::From<(f64, f64, f64)> for Vec3 {
     fn from((x, y, z): (f64, f64, f64)) -> Self {
         Vec3 { x, y, z }
     }
 }
 
-impl fmt::Display for Vec3<f64> {
+impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "vec3({}, {},{})", self.x, self.y, self.z)
     }
 }
 
-impl ops::Add<f64> for Vec3<f64> {
+impl ops::Add<f64> for Vec3 {
     type Output = Self;
     fn add(self, rhs: f64) -> Self::Output {
         Vec3 {
@@ -118,7 +118,7 @@ impl ops::Add<f64> for Vec3<f64> {
         }
     }
 }
-impl ops::Add<Vec3<f64>> for Vec3<f64> {
+impl ops::Add<Vec3> for Vec3 {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Vec3 {
@@ -129,7 +129,7 @@ impl ops::Add<Vec3<f64>> for Vec3<f64> {
     }
 }
 
-impl ops::AddAssign for Vec3<f64> {
+impl ops::AddAssign for Vec3 {
     fn add_assign(&mut self, other: Self) {
         *self = Self {
             x: self.x + other.x,
@@ -139,7 +139,7 @@ impl ops::AddAssign for Vec3<f64> {
     }
 }
 
-impl ops::Neg for Vec3<f64> {
+impl ops::Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self::Output {
         Vec3 {
@@ -150,7 +150,7 @@ impl ops::Neg for Vec3<f64> {
     }
 }
 
-impl ops::Sub for Vec3<f64> {
+impl ops::Sub for Vec3 {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self::Output {
         Vec3 {
@@ -161,15 +161,15 @@ impl ops::Sub for Vec3<f64> {
     }
 }
 
-impl ops::Mul<Vec3<f64>> for Vec3<f64> {
+impl ops::Mul<Vec3> for Vec3 {
     type Output = f64;
     fn mul(self, rhs: Self) -> Self::Output {
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
-impl ops::Mul<f64> for Vec3<f64> {
-    type Output = Vec3<f64>;
+impl ops::Mul<f64> for Vec3 {
+    type Output = Vec3;
     fn mul(self, rhs: f64) -> Self::Output {
         Vec3 {
             x: self.x * rhs,
@@ -179,9 +179,9 @@ impl ops::Mul<f64> for Vec3<f64> {
     }
 }
 
-impl ops::Mul<Vec3<f64>> for f64 {
-    type Output = Vec3<f64>;
-    fn mul(self, rhs: Vec3<f64>) -> Self::Output {
+impl ops::Mul<Vec3> for f64 {
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Vec3 {
             x: rhs.x * self,
             y: rhs.y * self,
@@ -190,8 +190,8 @@ impl ops::Mul<Vec3<f64>> for f64 {
     }
 }
 
-impl ops::Div<f64> for Vec3<f64> {
-    type Output = Vec3<f64>;
+impl ops::Div<f64> for Vec3 {
+    type Output = Vec3;
     fn div(self, rhs: f64) -> Self::Output {
         Vec3 {
             x: self.x / rhs,
@@ -201,25 +201,25 @@ impl ops::Div<f64> for Vec3<f64> {
     }
 }
 
-pub type Point3<T> = Vec3<T>;
-pub type Color<T> = Vec3<T>;
+pub type Point3 = Vec3;
+pub type Color = Vec3;
 
 #[derive(Copy, Clone)]
-pub struct Ray<T> {
-    pub origin: Point3<T>,
-    pub direction: Vec3<T>,
+pub struct Ray {
+    pub origin: Point3,
+    pub direction: Vec3,
 }
 
-impl Ray<f64> {
-    pub fn new(origin: Point3<f64>, direction: Vec3<f64>) -> Self {
+impl Ray {
+    pub fn new(origin: Point3, direction: Vec3) -> Self {
         Ray { origin, direction }
     }
 
-    pub fn at(self, t: f64) -> Point3<f64> {
+    pub fn at(self, t: f64) -> Point3 {
         self.origin + self.direction * t
     }
 
-    pub fn calc_color(self, hittable: &dyn Hittable, depth: i32) -> Color<f64> {
+    pub fn calc_color(self, hittable: &dyn Hittable, depth: i32) -> Color {
         // println!("depth: {}", depth);
         if depth <= 0 {
             return Color::from((0, 0, 0));
@@ -239,12 +239,12 @@ impl Ray<f64> {
         return Color::from((1, 1, 1)) * (1f64 - t) + Color::from((0.5f64, 0.7f64, 1f64)) * t;
     }
 
-    pub fn hit(&self, center: &Point3<f64>, radius: f64) -> f64 {
+    pub fn hit(&self, center: &Point3, radius: f64) -> f64 {
         hit_sphere(center, radius, self)
     }
 }
 
-impl Default for Ray<f64> {
+impl Default for Ray {
     fn default() -> Self {
         Ray {
             origin: Point3::default(),
@@ -253,7 +253,7 @@ impl Default for Ray<f64> {
     }
 }
 
-fn hit_sphere(&center: &Point3<f64>, radius: f64, ray: &Ray<f64>) -> f64 {
+fn hit_sphere(&center: &Point3, radius: f64, ray: &Ray) -> f64 {
     let oc = ray.origin - center;
     let a = ray.direction.length_squared();
     let half_b = oc * ray.direction;
@@ -268,8 +268,8 @@ fn hit_sphere(&center: &Point3<f64>, radius: f64, ray: &Ray<f64>) -> f64 {
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
-    pub point: Point3<f64>,
-    pub normal: Vec3<f64>,
+    pub point: Point3,
+    pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
 }
@@ -286,11 +286,11 @@ impl Default for HitRecord {
 }
 
 pub trait Hittable {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool;
 }
 
 impl HitRecord {
-    pub fn set_face_normal(&mut self, ray: &Ray<f64>, outward_normal: Vec3<f64>) {
+    pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
         self.front_face = (ray.direction * outward_normal).is_sign_negative();
         self.normal = if self.front_face {
             outward_normal
@@ -301,18 +301,18 @@ impl HitRecord {
 }
 
 pub struct Sphere {
-    pub center: Point3<f64>,
+    pub center: Point3,
     pub radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: Point3<f64>, radius: f64) -> Self {
+    pub fn new(center: Point3, radius: f64) -> Self {
         Sphere { center, radius }
     }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = oc * ray.direction;
@@ -363,7 +363,7 @@ impl Default for HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, ray: &Ray<f64>, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let mut temp_rec = HitRecord::default();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
@@ -385,10 +385,10 @@ pub fn degrees_to_radians(degrees: f64) -> f64 {
 }
 
 pub struct Camera {
-    origin: Point3<f64>,
-    lower_left_corner: Point3<f64>,
-    horizontal: Vec3<f64>,
-    vertical: Vec3<f64>,
+    origin: Point3,
+    lower_left_corner: Point3,
+    horizontal: Vec3,
+    vertical: Vec3,
 }
 
 impl Camera {
@@ -412,7 +412,7 @@ impl Camera {
         }
     }
 
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray<f64> {
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
         Ray {
             origin: self.origin,
             direction: self.lower_left_corner + u * self.horizontal + v * self.vertical
