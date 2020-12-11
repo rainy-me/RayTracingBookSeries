@@ -17,12 +17,13 @@ fn main() -> std::io::Result<()> {
     let max_depth = 100;
 
     // World
+    let r: f64 = (std::f64::consts::PI / 4.).cos();
     let mut world = HittableList::default();
 
-    let material_ground = Lambertian::new(37, 42, 52).as_ref();
-    let material_left = Dielectric::new(1.5).as_ref();
-    let material_center = Lambertian::new(255, 46, 99).as_ref();
-    let material_right = Metal::new(200, 200, 200, 0.3).as_ref();
+    let material_ground = Lambertian::new(220, 220, 220).as_ref();
+    let material_left = Metal::new(8, 217, 214, 0.6).as_ref();
+    let material_center = Metal::new(220, 220, 220, 0.3).as_ref();
+    let material_right = Lambertian::new(255, 46, 99).as_ref();
 
     world.add(Arc::new(Sphere {
         center: Point3::new(0., -100.5, -1.),
@@ -35,18 +36,30 @@ fn main() -> std::io::Result<()> {
         material: material_center,
     }));
     world.add(Arc::new(Sphere {
-        center: Point3::new(-1., 0., -1.),
+        center: Point3::new(-r, 0., -1.),
         radius: -0.5,
         material: material_left,
     }));
     world.add(Arc::new(Sphere {
-        center: Point3::new(1., 0., -1.),
+        center: Point3::new(r, 0., -1.),
         radius: 0.5,
         material: material_right,
     }));
 
+    let look_from = Point3::new(3., 3., 2.);
+    let look_at = Point3::new(0., 0., -1.);
+
     // Camera
-    let camera = Camera::new();
+    let camera = Camera::new(
+        look_from,
+        look_at,
+        Vec3::new(0., 1., 0.),
+        25.0,
+        aspect_ratio,
+        2.0,
+        (look_from - look_at).length(),
+    );
+
     let all = (width * height) as f64 / 100.;
     let count = Arc::new(Mutex::new(0.));
     let mut img_str = format!("P3\n{} {}\n255\n", width, height);
