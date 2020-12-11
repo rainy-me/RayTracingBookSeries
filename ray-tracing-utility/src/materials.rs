@@ -1,4 +1,5 @@
 use crate::*;
+use std::sync::Arc;
 pub trait Material {
     fn scatter(
         &self,
@@ -14,10 +15,14 @@ pub struct Lambertian {
 }
 
 impl Lambertian {
-    pub fn new() -> Self {
-        Lambertian {
-            albedo: Vec3::default(),
+    pub fn new(r: i32, g: i32, b: i32) -> Self {
+        Self {
+            albedo: Color::rgb(r, g, b),
         }
+    }
+
+    pub fn as_ref(self) -> Arc<Self> {
+        Arc::new(self)
     }
 }
 
@@ -45,6 +50,20 @@ impl Material for Lambertian {
 #[derive(Copy, Clone)]
 pub struct Metal {
     pub albedo: Color,
+    pub fuzz: f64,
+}
+
+impl Metal {
+    pub fn new(r: i32, g: i32, b: i32, fuzz: f64) -> Self {
+        Self {
+            albedo: Color::rgb(r, g, b),
+            fuzz: if fuzz < 1. { fuzz } else { 1. },
+        }
+    }
+
+    pub fn as_ref(self) -> Arc<Self> {
+        Arc::new(self)
+    }
 }
 
 impl Material for Metal {
@@ -58,7 +77,7 @@ impl Material for Metal {
         let reflected = ray_in.direction.reflect(record.normal).unit();
         *scattered = Ray {
             origin: record.point,
-            direction: reflected,
+            direction: reflected + self.fuzz * Vec3::random_in_unit_sphere(),
         };
         *attenuation = self.albedo;
         return scattered.direction.dot(record.normal) > 0.;

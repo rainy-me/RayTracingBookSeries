@@ -17,7 +17,7 @@ impl Default for HitRecord {
             normal: Vec3::from((0, 0, 0)),
             t: 0f64,
             front_face: true,
-            material: Arc::new(Lambertian::new()),
+            material: Arc::new(Lambertian::new(0, 0, 0)),
         }
     }
 }
@@ -48,7 +48,7 @@ impl Sphere {
         Sphere {
             center,
             radius,
-            material: Arc::new(Lambertian::new()),
+            material: Arc::new(Lambertian::new(0, 0, 0)),
         }
     }
 }

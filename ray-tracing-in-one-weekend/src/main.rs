@@ -19,18 +19,10 @@ fn main() -> std::io::Result<()> {
     // World
     let mut world = HittableList::default();
 
-    let material_ground = Arc::new(Lambertian {
-        albedo: Color::rgb(37, 42, 52),
-    });
-    let material_center = Arc::new(Metal {
-        albedo: Color::rgb(234, 234, 234),
-    });
-    let material_left = Arc::new(Lambertian {
-        albedo: Color::rgb(255, 46, 99),
-    });
-    let material_right = Arc::new(Lambertian {
-        albedo: Color::rgb(8, 217, 214),
-    });
+    let material_ground = Lambertian::new(37, 42, 52).as_ref();
+    let material_center = Metal::new(200, 200, 200, 0.3).as_ref();
+    let material_left = Lambertian::new(255, 46, 99).as_ref();
+    let material_right = Metal::new(8, 217, 214, 0.7).as_ref();
 
     world.add(Arc::new(Sphere {
         center: Point3::new(0., -100.5, -1.),
