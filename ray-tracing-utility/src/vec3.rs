@@ -1,4 +1,4 @@
-use rand::Rng;
+use crate::*;
 use std::{convert, fmt, ops};
 
 #[derive(Copy, Clone)]
@@ -59,17 +59,17 @@ impl Vec3 {
 
     pub fn random() -> Self {
         Vec3 {
-            x: rand::random::<f64>(),
-            y: rand::random::<f64>(),
-            z: rand::random::<f64>(),
+            x: rand_f64(),
+            y: rand_f64(),
+            z: rand_f64(),
         }
     }
 
     pub fn random_in_range(low: f64, high: f64) -> Self {
         Vec3 {
-            x: rand::thread_rng().gen_range(low, high),
-            y: rand::thread_rng().gen_range(low, high),
-            z: rand::thread_rng().gen_range(low, high),
+            x: rand_f64_in_range(low, high),
+            y: rand_f64_in_range(low, high),
+            z: rand_f64_in_range(low, high),
         }
     }
 

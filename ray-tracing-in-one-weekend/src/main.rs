@@ -10,54 +10,27 @@ fn main() -> std::io::Result<()> {
     let path = env::current_dir()?.join("out");
     let img_pmm = path.join("ray-tracing-in-one-weekend.ppm");
     let img_png = path.join("ray-tracing-in-one-weekend.png");
-    let aspect_ratio = 16. / 9.;
-    let width = 800;
+    let aspect_ratio = 3. / 2.;
+    let width = 1200;
     let height = (width as f64 / aspect_ratio) as i32;
-    let samples_per_pixel = 100;
+    let samples_per_pixel = 500;
     let max_depth = 100;
 
     // World
-    let r: f64 = (std::f64::consts::PI / 4.).cos();
-    let mut world = HittableList::default();
-
-    let material_ground = Lambertian::new(220, 220, 220).as_ref();
-    let material_left = Metal::new(8, 217, 214, 0.6).as_ref();
-    let material_center = Metal::new(220, 220, 220, 0.3).as_ref();
-    let material_right = Lambertian::new(255, 46, 99).as_ref();
-
-    world.add(Arc::new(Sphere {
-        center: Point3::new(0., -100.5, -1.),
-        radius: 100.,
-        material: material_ground,
-    }));
-    world.add(Arc::new(Sphere {
-        center: Point3::new(0., 0., -1.),
-        radius: 0.5,
-        material: material_center,
-    }));
-    world.add(Arc::new(Sphere {
-        center: Point3::new(-r, 0., -1.),
-        radius: -0.5,
-        material: material_left,
-    }));
-    world.add(Arc::new(Sphere {
-        center: Point3::new(r, 0., -1.),
-        radius: 0.5,
-        material: material_right,
-    }));
-
-    let look_from = Point3::new(3., 3., 2.);
-    let look_at = Point3::new(0., 0., -1.);
+    let world = random_scene();
 
     // Camera
+    let look_from = Point3::new(13., 2., 3.);
+    let look_at = Point3::new(0., 0., 0.);
+
     let camera = Camera::new(
         look_from,
         look_at,
         Vec3::new(0., 1., 0.),
-        25.0,
+        20.0,
         aspect_ratio,
-        2.0,
-        (look_from - look_at).length(),
+        0.1,
+        10.,
     );
 
     let all = (width * height) as f64 / 100.;
@@ -93,4 +66,86 @@ fn main() -> std::io::Result<()> {
         .expect("failed to execute process");
     eprintln!("Done.");
     Ok(())
+}
+
+fn random_scene() -> HittableList {
+    let mut world = HittableList::default();
+
+    world.add(Arc::new(Sphere {
+        center: Point3::new(0., -1000., 0.),
+        radius: 1000.0,
+        material: Lambertian {
+            albedo: Color::new(0.5, 0.5, 0.5),
+        }
+        .as_ref(),
+    }));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = rand_f64();
+            let center = Point3::new(
+                a as f64 + 0.9 * rand_f64(),
+                0.2,
+                b as f64 + 0.9 * rand_f64(),
+            );
+
+            if (center - Point3::new(4., 0.2, 0.)).length() <= 0.9 {
+                continue;
+            }
+
+            let material: Arc<dyn Material> = match true {
+                _ if choose_mat < 0.8 => {
+                    // diffuse
+                    Lambertian {
+                        albedo: Color::random() * Color::random(),
+                    }
+                    .as_ref()
+                }
+                _ if choose_mat < 0.95 => {
+                    // metal
+                    Metal {
+                        albedo: Color::random_in_range(0.5, 1.),
+                        fuzz: rand_f64_in_range(0., 0.5),
+                    }
+                    .as_ref()
+                }
+                _ => {
+                    // glass
+                    Dielectric::new(1.5).as_ref()
+                }
+            };
+            world.add(Arc::new(Sphere {
+                center,
+                radius: 0.2,
+                material,
+            }));
+        }
+    }
+
+    world.add(Arc::new(Sphere {
+        center: Point3::new(0., 1., 0.),
+        radius: 1.0,
+        material: Dielectric::new(1.5).as_ref(),
+    }));
+
+    world.add(Arc::new(Sphere {
+        center: Point3::new(-4., 1., 0.),
+        radius: 1.0,
+        material: Lambertian {
+            albedo: Color::new(0.4, 0.2, 0.1),
+        }
+        .as_ref(),
+    }));
+
+    world.add(Arc::new(Sphere {
+        center: Point3::new(4., 1., 0.),
+        radius: 1.0,
+        material: Metal {
+            albedo: Color::new(0.7, 0.6, 0.5),
+            fuzz: 0.0,
+        }
+        .as_ref(),
+    }));
+
+    world
 }
