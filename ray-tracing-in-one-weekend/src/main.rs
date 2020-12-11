@@ -60,7 +60,7 @@ fn main() -> std::io::Result<()> {
     let mut img_str = format!("P3\n{} {}\n255\n", width, height);
     let img_content = (0..height)
         .rev()
-        .flat_map(|j| (0..width).map(|i| (i, j)).collect::<Vec<(i32, i32)>>())
+        .flat_map(|j| (0..width).map(|i| (i, j)).collect::<Vec<_>>())
         .collect::<Vec<(i32, i32)>>()
         .par_iter()
         .map(|&(i, j)| {
