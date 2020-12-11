@@ -22,7 +22,7 @@ fn main() -> std::io::Result<()> {
     let material_ground = Lambertian::new(37, 42, 52).as_ref();
     let material_center = Metal::new(200, 200, 200, 0.3).as_ref();
     let material_left = Lambertian::new(255, 46, 99).as_ref();
-    let material_right = Metal::new(8, 217, 214, 0.7).as_ref();
+    let material_right = Dielectric::new(1.5).as_ref();
 
     world.add(Arc::new(Sphere {
         center: Point3::new(0., -100.5, -1.),
