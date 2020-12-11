@@ -10,23 +10,53 @@ fn main() -> std::io::Result<()> {
     let path = env::current_dir()?.join("out");
     let img_pmm = path.join("ray-tracing-in-one-weekend.ppm");
     let img_png = path.join("ray-tracing-in-one-weekend.png");
-    let aspect_ratio = 16.0 / 9.0;
+    let aspect_ratio = 16. / 9.;
     let width = 800;
     let height = (width as f64 / aspect_ratio) as i32;
     let samples_per_pixel = 100;
     let max_depth = 100;
 
     // World
-    let sp_1 = Sphere::new(Point3::from((0, 0, -1)), 0.5);
-    let sp_2 = Sphere::new(Point3::from((0.0, -100.5, 0.0)), 100.0);
     let mut world = HittableList::default();
-    world.add(Arc::new(sp_1));
-    world.add(Arc::new(sp_2));
+
+    let material_ground = Arc::new(Lambertian {
+        albedo: Color::rgb(37, 42, 52),
+    });
+    let material_center = Arc::new(Metal {
+        albedo: Color::rgb(234, 234, 234),
+    });
+    let material_left = Arc::new(Lambertian {
+        albedo: Color::rgb(255, 46, 99),
+    });
+    let material_right = Arc::new(Lambertian {
+        albedo: Color::rgb(8, 217, 214),
+    });
+
+    world.add(Arc::new(Sphere {
+        center: Point3::new(0., -100.5, -1.),
+        radius: 100.,
+        material: material_ground,
+    }));
+    world.add(Arc::new(Sphere {
+        center: Point3::new(0., 0., -1.),
+        radius: 0.5,
+        material: material_center,
+    }));
+    world.add(Arc::new(Sphere {
+        center: Point3::new(-1., 0., -1.),
+        radius: 0.5,
+        material: material_left,
+    }));
+    world.add(Arc::new(Sphere {
+        center: Point3::new(1., 0., -1.),
+        radius: 0.5,
+        material: material_right,
+    }));
 
     // Camera
     let camera = Camera::new();
-    let all = (width * height) as f64 / 100.0;
-    let count = Arc::new(Mutex::new(0.0));
+    let all = (width * height) as f64 / 100.;
+    let count = Arc::new(Mutex::new(0.));
     let mut img_str = format!("P3\n{} {}\n255\n", width, height);
     let img_content = (0..height)
         .rev()
@@ -34,14 +64,14 @@ fn main() -> std::io::Result<()> {
         .collect::<Vec<(i32, i32)>>()
         .par_iter()
         .map(|&(i, j)| {
-            let mut pixel_color = Color::from((0, 0, 0));
+            let mut pixel_color = Color::new(0., 0., 0.);
             for _ in 0..samples_per_pixel {
                 let u = i as f64 / width as f64;
                 let v = j as f64 / height as f64;
                 pixel_color += camera.get_ray(u, v).calc_color(&world, max_depth)
             }
             let mut c = count.lock().unwrap();
-            *c += 1.0;
+            *c += 1.;
             println!("{:.2}%", *c / all);
             pixel_color.to_color_string(samples_per_pixel)
         })

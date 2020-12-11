@@ -1,5 +1,4 @@
-use crate::hittable::*;
-use crate::vec3::*;
+use crate::*;
 #[derive(Copy, Clone)]
 pub struct Ray {
     pub origin: Point3,
@@ -21,15 +20,18 @@ impl Ray {
             return Color::from((0, 0, 0));
         }
         let mut record = HitRecord::default();
-        if hittable.hit(&self, 0.001, std::f64::INFINITY, &mut record) {
+        if hittable.hit(&self, 0.01, std::f64::INFINITY, &mut record) {
             // let target = record.point + record.normal + Vec3::random_unit_vec();
-            let target = record.point + record.normal.random_in_hemisphere();
-            return Ray {
-                origin: record.point,
-                direction: target - record.point,
+            let mut scattered = Ray::default();
+            let mut attenuation = Color::default();
+            if record
+                .material
+                .scatter(&self, &record, &mut attenuation, &mut scattered)
+            {
+                return attenuation * scattered.calc_color(hittable, depth - 1);
+            } else {
+                return Color::default();
             }
-            .calc_color(hittable, depth - 1)
-                * 0.5;
         }
         let unit = self.direction.unit();
         let t = 0.5 * (unit.y + 1f64);
@@ -53,7 +55,7 @@ impl Default for Ray {
 fn hit_sphere(&center: &Point3, radius: f64, ray: &Ray) -> f64 {
     let oc = ray.origin - center;
     let a = ray.direction.length_squared();
-    let half_b = oc * ray.direction;
+    let half_b = oc.dot(ray.direction);
     let c = oc.length_squared() - radius * radius;
     let discriminant = half_b * half_b - a * c;
     if discriminant.is_sign_negative() {

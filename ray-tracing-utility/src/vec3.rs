@@ -15,7 +15,7 @@ impl Vec3 {
     }
 
     pub fn length_squared(self) -> f64 {
-        self * self
+        self.dot(self)
     }
 
     pub fn length(self) -> f64 {
@@ -23,7 +23,7 @@ impl Vec3 {
     }
 
     pub fn dot(self, target: Self) -> f64 {
-        self * target
+        self.x * target.x + self.y * target.y + self.z * target.z
     }
 
     pub fn cross(self, target: Self) -> Self {
@@ -39,12 +39,20 @@ impl Vec3 {
         self / len
     }
 
+    pub fn rgb(r: i32, g: i32, b: i32) -> Self {
+        Vec3 {
+            x: r as f64 / 255.999,
+            y: g as f64 / 255.999,
+            z: b as f64 / 255.999,
+        }
+    }
+
     pub fn to_color_string(self, samples_per_pixel: i32) -> String {
-        let scale = 1.0 / samples_per_pixel as f64;
+        let scale = 1. / samples_per_pixel as f64;
 
         vec![self.x, self.y, self.z]
             .iter()
-            .map(|n| ((255.999 * clamp((n * scale).sqrt(), 0.0, 0.999)) as i32).to_string())
+            .map(|n| ((255.999 * clamp((n * scale).sqrt(), 0., 0.999)) as i32).to_string())
             .collect::<Vec<_>>()
             .join(" ")
     }
@@ -67,8 +75,8 @@ impl Vec3 {
 
     pub fn random_in_unit_sphere() -> Self {
         loop {
-            let p = Vec3::random_in_range(-1.0, 1.0);
-            if p.length_squared() < 1.0 {
+            let p = Vec3::random_in_range(-1., 1.);
+            if p.length_squared() < 1. {
                 return p;
             }
         }
@@ -80,11 +88,20 @@ impl Vec3 {
 
     pub fn random_in_hemisphere(self) -> Self {
         let in_unit_sphere = Self::random_in_unit_sphere();
-        if (in_unit_sphere * self).is_sign_positive() {
+        if (in_unit_sphere.dot(self)).is_sign_positive() {
             in_unit_sphere
         } else {
             -in_unit_sphere
         }
+    }
+
+    pub fn near_zero(self) -> bool {
+        const SMALL: f64 = 1e-8;
+        (self.x < SMALL) && (self.y < SMALL) && (self.z < SMALL)
+    }
+
+    pub fn reflect(self, normal: Vec3) -> Vec3 {
+        self - self.dot(normal) * normal * 2.
     }
 }
 
@@ -174,9 +191,9 @@ impl ops::Sub for Vec3 {
 }
 
 impl ops::Mul<Vec3> for Vec3 {
-    type Output = f64;
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+    type Output = Vec3;
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3::from((self.x * rhs.x, self.y * rhs.y, self.z * rhs.z))
     }
 }
 

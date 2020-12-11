@@ -1,13 +1,13 @@
-use crate::ray::*;
-use crate::vec3::*;
+use crate::*;
 use std::sync::Arc;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
     pub t: f64,
     pub front_face: bool,
+    pub material: Arc<dyn Material>,
 }
 
 impl Default for HitRecord {
@@ -17,6 +17,7 @@ impl Default for HitRecord {
             normal: Vec3::from((0, 0, 0)),
             t: 0f64,
             front_face: true,
+            material: Arc::new(Lambertian::new()),
         }
     }
 }
@@ -27,7 +28,7 @@ pub trait Hittable {
 
 impl HitRecord {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
-        self.front_face = (ray.direction * outward_normal).is_sign_negative();
+        self.front_face = (ray.direction.dot(outward_normal)).is_sign_negative();
         self.normal = if self.front_face {
             outward_normal
         } else {
@@ -39,11 +40,16 @@ impl HitRecord {
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
+    pub material: Arc<dyn Material>,
 }
 
 impl Sphere {
     pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+        Sphere {
+            center,
+            radius,
+            material: Arc::new(Lambertian::new()),
+        }
     }
 }
 
@@ -51,7 +57,7 @@ impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, record: &mut HitRecord) -> bool {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
-        let half_b = oc * ray.direction;
+        let half_b = oc.dot(ray.direction);
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = half_b * half_b - a * c;
@@ -69,6 +75,7 @@ impl Hittable for Sphere {
         record.t = root;
         record.point = ray.at(record.t).clone();
         record.set_face_normal(ray, (record.point - self.center) / self.radius);
+        record.material = self.material.clone();
         true
     }
 }
@@ -108,7 +115,7 @@ impl Hittable for HittableList {
             if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
-                *record = temp_rec;
+                *record = temp_rec.clone();
             }
         }
 
@@ -117,5 +124,5 @@ impl Hittable for HittableList {
 }
 
 pub fn degrees_to_radians(degrees: f64) -> f64 {
-    return degrees * std::f64::consts::PI / 180.0;
+    return degrees * std::f64::consts::PI / 180.;
 }
